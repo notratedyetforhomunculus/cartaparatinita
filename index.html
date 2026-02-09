@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Para Tinita</title>
     <style>
         /* --- CONFIGURACIÓN GENERAL --- */
@@ -25,7 +25,8 @@
             background-image: radial-gradient(#f8bbd0 1px, transparent 1px);
             background-size: 20px 20px;
             overflow: hidden;
-            touch-action: manipulation; /* Mejora la respuesta táctil */
+            touch-action: manipulation;
+            -webkit-font-smoothing: antialiased; /* Texto más nítido en iOS */
         }
 
         /* --- ESTILOS DEL SOBRE --- */
@@ -110,35 +111,47 @@
         .puzzle-piece.selected { transform: scale(0.92); box-shadow: 0 0 15px #ff4081; z-index: 10; border: 3px solid #ff4081; }
         @keyframes fadeInScale { from { opacity: 0; transform: scale(0.8) translateY(30px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 
-        /* --- MENSAJE FINAL Y BOTONES --- */
+        /* --- MENSAJE FINAL (PREGUNTA) Y BOTONES --- */
         #final-message {
             display: none;
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            /* Asegura que ocupe toda la pantalla en móviles */
+            min-height: -webkit-fill-available; 
             background-color: rgba(252, 228, 236, 0.98);
-            flex-direction: column; justify-content: center; align-items: center;
-            text-align: center; z-index: 100;
-            padding: 20px; box-sizing: border-box;
+            /* Centrado Flexbox reforzado */
+            display: flex; 
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 100;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         #final-message h1 {
-            color: #c2185b; font-size: 2.2rem; margin-bottom: 40px;
+            color: #c2185b; font-size: 2rem; margin-bottom: 30px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
             z-index: 102; position: relative;
+            max-width: 90%; /* Evita que el texto se salga en pantallas muy estrechas */
         }
 
         .buttons-container {
             position: relative;
-            width: 100%; height: 250px; /* Más espacio para moverse */
+            width: 100%; height: 250px;
             display: flex; justify-content: center; align-items: center;
             gap: 20px; z-index: 102;
+            margin-bottom: 50px; /* Espacio extra abajo para compensar la altura en iPhone */
         }
 
         .btn {
-            padding: 15px 40px; font-size: 1.2rem;
+            padding: 15px 30px; font-size: 1.1rem; /* Un poco más pequeños para que quepan bien */
             border: none; border-radius: 50px;
             cursor: pointer; font-weight: bold;
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            transition: all 0.2s; /* Transición suave */
+            transition: all 0.2s;
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -146,38 +159,34 @@
         #btn-no { background-color: #bdbdbd; color: #424242; z-index: 104; }
         
         #btn-no.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            pointer-events: none; /* Deshabilita clics */
+            opacity: 0.5; cursor: not-allowed; pointer-events: none;
         }
 
-        /* --- FRASES BURLESCAS FLOTANTES --- */
+        /* --- FRASES BURLESCAS FLOTANTES (Duración 3s) --- */
         .taunt-msg {
             position: fixed;
-            color: #d81b60;
-            font-weight: bold;
-            font-size: 1.2rem;
+            color: #d81b60; font-weight: bold; font-size: 1.3rem;
             pointer-events: none;
-            animation: floatUpFade 1.5s forwards;
-            z-index: 110;
-            text-shadow: 1px 1px 0px white;
+            /* Animación aumentada a 3 segundos */
+            animation: floatUpFade 3s forwards ease-out;
+            z-index: 110; text-shadow: 1px 1px 0px white;
+            width: 200px; text-align: center; /* Centrar el texto del mensaje */
+            transform: translateX(-50%); /* Centrar respecto al punto de toque */
         }
 
         @keyframes floatUpFade {
-            0% { opacity: 0; transform: translateY(10px) scale(0.8); }
-            20% { opacity: 1; transform: translateY(0) scale(1.1); }
-            100% { opacity: 0; transform: translateY(-30px) scale(1); }
+            0% { opacity: 0; transform: translate(-50%, 10px) scale(0.8); }
+            15% { opacity: 1; transform: translate(-50%, 0) scale(1.1); }
+            80% { opacity: 1; transform: translate(-50%, -20px) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -40px) scale(0.9); }
         }
 
         /* --- POPUP DEL "NO" --- */
         #no-popup {
-            display: none;
-            position: fixed; top: 50%; left: 50%;
+            display: none; position: fixed; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            background: white; padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.3);
-            z-index: 200; text-align: center;
+            background: white; padding: 20px; border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3); z-index: 200; text-align: center;
             animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             width: 80%; max-width: 300px;
         }
@@ -186,7 +195,7 @@
 
         @keyframes popIn { from { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
 
-        /* --- FUEGOS ARTIFICIALES --- */
+        /* --- FUEGOS ARTIFICIALES Y PANTALLA FINAL --- */
         #fireworks-canvas {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 101; pointer-events: none; display: none;
@@ -196,8 +205,18 @@
             display: none; position: fixed; top:0; left:0; width:100%; height:100%;
             z-index: 103; flex-direction: column; justify-content: center; align-items: center;
             color: #c2185b;
+            text-align: center; /* Asegura centrado en iPhone */
         }
-        #success-overlay h1 { font-size: 3em; text-shadow: 0 0 10px white; }
+        #success-overlay h1 { font-size: 3em; text-shadow: 0 0 10px white; margin: 0 0 10px 0;}
+        #success-overlay p { font-size: 1.5em; margin-bottom: 30px; }
+        
+        /* Nuevo estilo para el GIF final */
+        .success-gif {
+            width: 80%; max-width: 300px; height: auto;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(233, 30, 99, 0.4);
+            animation: popIn 0.8s ease-out;
+        }
 
     </style>
 </head>
@@ -214,7 +233,7 @@
         <div class="envelope" id="envelope">
             <div class="heart-seal">❤</div>
         </div>
-        <div class="text-hint">Toca para abrir</div>
+        <div class="text-hint">Ha llegado carta</div>
     </div>
 
     <div id="game-container">
@@ -239,7 +258,8 @@
     <canvas id="fireworks-canvas"></canvas>
     <div id="success-overlay">
         <h1>¡SÍÍÍÍÍ! ❤️</h1>
-        <p>Le amo puuuu, la espero en nuestro refugio..mmmmmmmmmm.</p>
+        <p>Le amo puuu, la espero en nuestro lugar</p>
+        <img src="mmm.gif" alt="Celebración" class="success-gif">
     </div>
 
     <script>
@@ -251,28 +271,22 @@
         let pieces = [];
         let selectedPiece = null;
 
-        /* --- LÓGICA DE AUDIO IPHONE Y APERTURA --- */
+        /* --- LÓGICA DE AUDIO IPHONE CORREGIDA --- */
         function openEnvelope() {
-            // TRUCO IPHONE: Intentar reproducir AMBOS audios en el evento de clic inicial
             const bgMusic = document.getElementById('bg-music');
             const noSound = document.getElementById('no-sound');
             
-            // 1. Reproducir música
+            // 1. Intentar reproducir la música (lo que queremos oír ahora)
             bgMusic.volume = 0.5;
-            bgMusic.play().then(() => {
-                console.log("Música iniciada");
-            }).catch(error => {
-                console.log("Error autoplay música:", error);
-            });
+            bgMusic.play().catch(error => console.log("Error autoplay música:", error));
 
-            // 2. "Calentar" el efecto de sonido (reproducir silencio y pausar)
-            // Esto le dice al iPhone "oye, voy a usar este audio luego, cárgalo ya"
-            noSound.volume = 0; 
-            noSound.play().then(() => {
-                noSound.pause();
-                noSound.currentTime = 0;
-                noSound.volume = 1; // Restaurar volumen para cuando se use de verdad
-            }).catch(e => console.log("Error preload fx:", e));
+            // 2. CORRECCIÓN: Solo PRECARGAR el sonido del NO. 
+            // No intentamos reproducirlo y pausarlo, eso causaba el glitch en iOS.
+            // .load() es suficiente para que iOS sepa que este audio existe.
+            try {
+                 noSound.load();
+            } catch(e) { console.log("Error loading no sound detected"); }
+
 
             // Animación
             const envelope = document.getElementById('envelope');
@@ -339,6 +353,7 @@
             });
             if (isWin) {
                 setTimeout(() => {
+                    // Usamos display flex para activar el centrado del CSS
                     document.getElementById('final-message').style.display = 'flex';
                     initButtons();
                 }, 500);
@@ -347,8 +362,8 @@
 
         /* --- BOTONES, TAUNTS Y LOGICA ESCURRIDIZA --- */
         let escapeCount = 0;
-        const maxEscapes = 6; // Se escapa 6 veces, a la 7ma se deja
-        const taunts = ["¡Muy lenta!", "¡Casi!", "¡Ups!", "Noni gana", "¡Soy rápido!", "Si fallas otra vez su nuesni es mio"];
+        const maxEscapes = 6; 
+        const taunts = ["¡Muy lenta!", "¡Casi!", "¡Ups!", "Noni gana", "¡Soy rápido!", "Intenta de nuevo"];
         let noButtonClicked = false;
 
         function initButtons() {
@@ -359,17 +374,25 @@
             const container = document.getElementById('btns-container');
 
             // --- CLICK EN NO ---
-            btnNo.addEventListener('click', () => {
-                if (noButtonClicked) return; // Si ya se pulsó, no hacer nada
+            btnNo.addEventListener('click', (e) => {
+                e.preventDefault(); // Prevenir comportamientos extraños en iOS
+                if (noButtonClicked) return; 
 
-                noButtonClicked = true; // Marcar como pulsado
-                btnNo.classList.add('disabled'); // Cambiar estilo visual
+                noButtonClicked = true; 
+                btnNo.classList.add('disabled'); 
                 
-                // Reproducir sonido
                 noSound.currentTime = 0;
-                noSound.play();
+                // Promesa para manejar errores de reproducción en iOS
+                var playPromise = noSound.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(_ => {
+                      // Reproducción iniciada correctamente
+                    })
+                    .catch(error => {
+                      console.log("Error al reproducir sonido NO en iOS (puede requerir toque explícito):", error);
+                    });
+                }
                 
-                // Mostrar Popup
                 noPopup.style.display = 'block';
                 setTimeout(() => {
                     noPopup.style.display = 'none';
@@ -377,26 +400,27 @@
             });
 
             // --- LÓGICA DE ESCAPE DEL SÍ ---
-            // Usamos 'touchstart' para móviles (reacción rápida) y 'mouseover' para PC
             const moveButton = (e) => {
-                // Si ya se escapó muchas veces, dejar que la atrape
-                if (escapeCount >= maxEscapes) {
-                    return; 
+                if (escapeCount >= maxEscapes) return; 
+
+                escapeCount++;
+                
+                // Obtener coordenadas del toque o ratón de forma segura
+                let clientX, clientY;
+                if (e.touches && e.touches.length > 0) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
                 }
 
-                // Incrementar contador
-                escapeCount++;
+                showTaunt(clientX, clientY);
 
-                // Mostrar mensaje burlesco
-                showTaunt(e.clientX || e.touches[0].clientX, e.clientY || e.touches[0].clientY);
-
-                // Calcular nueva posición
                 const containerRect = container.getBoundingClientRect();
                 const btnRect = btnYes.getBoundingClientRect();
-                
                 const maxX = containerRect.width - btnRect.width;
                 const maxY = containerRect.height - btnRect.height;
-                
                 const newX = Math.random() * maxX;
                 const newY = Math.random() * maxY;
 
@@ -405,48 +429,52 @@
                 btnYes.style.top = Math.max(0, newY) + 'px';
             };
 
-            // Eventos para el escape
             btnYes.addEventListener('mouseover', moveButton);
-            btnYes.addEventListener('touchstart', moveButton, { passive: true });
+            // Usamos passive: false para asegurar que podemos prevenir el clic si es necesario
+            btnYes.addEventListener('touchstart', moveButton, { passive: false });
 
-            // Evento para CLICK FINAL (Victoria)
             btnYes.addEventListener('click', (e) => {
-                // Doble chequeo: si aún debe escapar y el usuario fue muy rápido (click gana a touchstart), forzar escape
                 if (escapeCount < maxEscapes) {
-                    e.preventDefault(); // Evitar click
-                    moveButton(e); // Mover
+                    e.preventDefault();
+                    e.stopPropagation();
+                    moveButton(e); 
                     return;
                 }
-
-                // Victoria
-                document.getElementById('final-message').style.display = 'none';
-                document.getElementById('no-popup').style.display = 'none';
-                document.getElementById('success-overlay').style.display = 'flex';
-                startFireworks();
+                finishGame();
+            });
+             // Añadimos un listener para touchend por si el click falla en algunos móviles
+             btnYes.addEventListener('touchend', (e) => {
+                 if (escapeCount >= maxEscapes) {
+                    e.preventDefault();
+                    finishGame();
+                 }
             });
         }
 
-        // Función para mostrar mensajes flotantes
+        function finishGame() {
+            document.getElementById('final-message').style.display = 'none';
+            document.getElementById('no-popup').style.display = 'none';
+            // Usamos display flex para el overlay final también
+            document.getElementById('success-overlay').style.display = 'flex';
+            startFireworks();
+        }
+
+        // Función para mostrar mensajes flotantes (DURACIÓN 3 SEGUNDOS)
         function showTaunt(x, y) {
             const msg = document.createElement('div');
             msg.classList.add('taunt-msg');
             msg.innerText = taunts[Math.floor(Math.random() * taunts.length)];
             
-            // Si no hay coordenadas (ej. mouseover a veces), usar centro
-            if (!x || !y) {
-                x = window.innerWidth / 2;
-                y = window.innerHeight / 2;
-            }
-
-            msg.style.left = (x - 20) + 'px'; // Un poco desplazado
-            msg.style.top = (y - 40) + 'px';
+            if (!x || !y) { x = window.innerWidth / 2; y = window.innerHeight / 2; }
+            msg.style.left = x + 'px'; 
+            msg.style.top = y + 'px';
             
             document.body.appendChild(msg);
 
-            // Eliminar del DOM después de la animación
+            // ELIMINAR DESPUÉS DE 3 SEGUNDOS (3000ms)
             setTimeout(() => {
-                msg.remove();
-            }, 1500);
+                if (msg.parentNode) msg.parentNode.removeChild(msg);
+            }, 3000);
         }
 
 
