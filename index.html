@@ -26,7 +26,7 @@
             background-size: 20px 20px;
             overflow: hidden;
             touch-action: manipulation;
-            -webkit-font-smoothing: antialiased; /* Texto más nítido en iOS */
+            -webkit-font-smoothing: antialiased;
         }
 
         /* --- ESTILOS DEL SOBRE --- */
@@ -113,15 +113,13 @@
 
         /* --- MENSAJE FINAL (PREGUNTA) Y BOTONES --- */
         #final-message {
-            display: none;
+            display: none; /* ESTO AHORA ES CORRECTO: SE MANTIENE OCULTO AL INICIO */
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            /* Asegura que ocupe toda la pantalla en móviles */
             min-height: -webkit-fill-available; 
             background-color: rgba(252, 228, 236, 0.98);
-            /* Centrado Flexbox reforzado */
-            display: flex; 
+            /* Centrado Flexbox */
             flex-direction: column;
             justify-content: center;
             align-items: center;
@@ -135,7 +133,7 @@
             color: #c2185b; font-size: 2rem; margin-bottom: 30px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
             z-index: 102; position: relative;
-            max-width: 90%; /* Evita que el texto se salga en pantallas muy estrechas */
+            max-width: 90%;
         }
 
         .buttons-container {
@@ -143,11 +141,11 @@
             width: 100%; height: 250px;
             display: flex; justify-content: center; align-items: center;
             gap: 20px; z-index: 102;
-            margin-bottom: 50px; /* Espacio extra abajo para compensar la altura en iPhone */
+            margin-bottom: 50px;
         }
 
         .btn {
-            padding: 15px 30px; font-size: 1.1rem; /* Un poco más pequeños para que quepan bien */
+            padding: 15px 30px; font-size: 1.1rem;
             border: none; border-radius: 50px;
             cursor: pointer; font-weight: bold;
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
@@ -162,16 +160,15 @@
             opacity: 0.5; cursor: not-allowed; pointer-events: none;
         }
 
-        /* --- FRASES BURLESCAS FLOTANTES (Duración 3s) --- */
+        /* --- FRASES BURLESCAS FLOTANTES --- */
         .taunt-msg {
             position: fixed;
             color: #d81b60; font-weight: bold; font-size: 1.3rem;
             pointer-events: none;
-            /* Animación aumentada a 3 segundos */
             animation: floatUpFade 3s forwards ease-out;
             z-index: 110; text-shadow: 1px 1px 0px white;
-            width: 200px; text-align: center; /* Centrar el texto del mensaje */
-            transform: translateX(-50%); /* Centrar respecto al punto de toque */
+            width: 200px; text-align: center;
+            transform: translateX(-50%);
         }
 
         @keyframes floatUpFade {
@@ -205,12 +202,11 @@
             display: none; position: fixed; top:0; left:0; width:100%; height:100%;
             z-index: 103; flex-direction: column; justify-content: center; align-items: center;
             color: #c2185b;
-            text-align: center; /* Asegura centrado en iPhone */
+            text-align: center;
         }
         #success-overlay h1 { font-size: 3em; text-shadow: 0 0 10px white; margin: 0 0 10px 0;}
         #success-overlay p { font-size: 1.5em; margin-bottom: 30px; }
         
-        /* Nuevo estilo para el GIF final */
         .success-gif {
             width: 80%; max-width: 300px; height: auto;
             border-radius: 20px;
@@ -264,31 +260,25 @@
 
     <script>
         /* --- CONFIGURACIÓN --- */
-        const imageSrc = 'misalsa.jpg'; // ASEGÚRATE DE QUE EL NOMBRE SEA CORRECTO
+        const imageSrc = 'misalsa.jpg'; 
         
         const rows = 3;
         const cols = 3;
         let pieces = [];
         let selectedPiece = null;
 
-        /* --- LÓGICA DE AUDIO IPHONE CORREGIDA --- */
+        /* --- LÓGICA DE AUDIO IPHONE --- */
         function openEnvelope() {
             const bgMusic = document.getElementById('bg-music');
             const noSound = document.getElementById('no-sound');
             
-            // 1. Intentar reproducir la música (lo que queremos oír ahora)
             bgMusic.volume = 0.5;
             bgMusic.play().catch(error => console.log("Error autoplay música:", error));
 
-            // 2. CORRECCIÓN: Solo PRECARGAR el sonido del NO. 
-            // No intentamos reproducirlo y pausarlo, eso causaba el glitch en iOS.
-            // .load() es suficiente para que iOS sepa que este audio existe.
             try {
                  noSound.load();
             } catch(e) { console.log("Error loading no sound detected"); }
 
-
-            // Animación
             const envelope = document.getElementById('envelope');
             const container = document.getElementById('envelope-container');
             container.classList.add('opening-active');
@@ -301,7 +291,7 @@
             }, 1400);
         }
 
-        /* --- LÓGICA PUZZLE (Igual) --- */
+        /* --- LÓGICA PUZZLE --- */
         function initGame() {
             const board = document.getElementById('board');
             board.innerHTML = '';
@@ -353,7 +343,7 @@
             });
             if (isWin) {
                 setTimeout(() => {
-                    // Usamos display flex para activar el centrado del CSS
+                    // AQUÍ ESTÁ LA MAGIA: Solo al ganar se muestra el mensaje
                     document.getElementById('final-message').style.display = 'flex';
                     initButtons();
                 }, 500);
@@ -375,21 +365,17 @@
 
             // --- CLICK EN NO ---
             btnNo.addEventListener('click', (e) => {
-                e.preventDefault(); // Prevenir comportamientos extraños en iOS
+                e.preventDefault();
                 if (noButtonClicked) return; 
 
                 noButtonClicked = true; 
                 btnNo.classList.add('disabled'); 
                 
                 noSound.currentTime = 0;
-                // Promesa para manejar errores de reproducción en iOS
                 var playPromise = noSound.play();
                 if (playPromise !== undefined) {
-                    playPromise.then(_ => {
-                      // Reproducción iniciada correctamente
-                    })
-                    .catch(error => {
-                      console.log("Error al reproducir sonido NO en iOS (puede requerir toque explícito):", error);
+                    playPromise.then(_ => {}).catch(error => {
+                      console.log("Error al reproducir sonido NO:", error);
                     });
                 }
                 
@@ -405,7 +391,6 @@
 
                 escapeCount++;
                 
-                // Obtener coordenadas del toque o ratón de forma segura
                 let clientX, clientY;
                 if (e.touches && e.touches.length > 0) {
                     clientX = e.touches[0].clientX;
@@ -430,7 +415,6 @@
             };
 
             btnYes.addEventListener('mouseover', moveButton);
-            // Usamos passive: false para asegurar que podemos prevenir el clic si es necesario
             btnYes.addEventListener('touchstart', moveButton, { passive: false });
 
             btnYes.addEventListener('click', (e) => {
@@ -442,7 +426,6 @@
                 }
                 finishGame();
             });
-             // Añadimos un listener para touchend por si el click falla en algunos móviles
              btnYes.addEventListener('touchend', (e) => {
                  if (escapeCount >= maxEscapes) {
                     e.preventDefault();
@@ -454,12 +437,11 @@
         function finishGame() {
             document.getElementById('final-message').style.display = 'none';
             document.getElementById('no-popup').style.display = 'none';
-            // Usamos display flex para el overlay final también
             document.getElementById('success-overlay').style.display = 'flex';
             startFireworks();
         }
 
-        // Función para mostrar mensajes flotantes (DURACIÓN 3 SEGUNDOS)
+        // Función para mostrar mensajes flotantes
         function showTaunt(x, y) {
             const msg = document.createElement('div');
             msg.classList.add('taunt-msg');
@@ -471,7 +453,6 @@
             
             document.body.appendChild(msg);
 
-            // ELIMINAR DESPUÉS DE 3 SEGUNDOS (3000ms)
             setTimeout(() => {
                 if (msg.parentNode) msg.parentNode.removeChild(msg);
             }, 3000);
