@@ -25,6 +25,7 @@
             background-image: radial-gradient(#f8bbd0 1px, transparent 1px);
             background-size: 20px 20px;
             overflow: hidden;
+            touch-action: manipulation; /* Mejora la respuesta táctil */
         }
 
         /* --- ESTILOS DEL SOBRE --- */
@@ -127,7 +128,7 @@
 
         .buttons-container {
             position: relative;
-            width: 100%; height: 200px;
+            width: 100%; height: 250px; /* Más espacio para moverse */
             display: flex; justify-content: center; align-items: center;
             gap: 20px; z-index: 102;
         }
@@ -137,13 +138,38 @@
             border: none; border-radius: 50px;
             cursor: pointer; font-weight: bold;
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            transition: transform 0.1s;
+            transition: all 0.2s; /* Transición suave */
+            -webkit-tap-highlight-color: transparent;
         }
 
-        #btn-yes { background-color: #e91e63; color: white; position: relative; }
-        #btn-no { background-color: #bdbdbd; color: #424242; }
+        #btn-yes { background-color: #e91e63; color: white; position: relative; z-index: 105;}
+        #btn-no { background-color: #bdbdbd; color: #424242; z-index: 104; }
+        
+        #btn-no.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none; /* Deshabilita clics */
+        }
 
-        /* --- POPUP DEL "NO" (GATITOS) --- */
+        /* --- FRASES BURLESCAS FLOTANTES --- */
+        .taunt-msg {
+            position: fixed;
+            color: #d81b60;
+            font-weight: bold;
+            font-size: 1.2rem;
+            pointer-events: none;
+            animation: floatUpFade 1.5s forwards;
+            z-index: 110;
+            text-shadow: 1px 1px 0px white;
+        }
+
+        @keyframes floatUpFade {
+            0% { opacity: 0; transform: translateY(10px) scale(0.8); }
+            20% { opacity: 1; transform: translateY(0) scale(1.1); }
+            100% { opacity: 0; transform: translateY(-30px) scale(1); }
+        }
+
+        /* --- POPUP DEL "NO" --- */
         #no-popup {
             display: none;
             position: fixed; top: 50%; left: 50%;
@@ -177,10 +203,10 @@
 </head>
 <body>
 
-    <audio id="bg-music" loop>
+    <audio id="bg-music" loop preload="auto">
         <source src="musica.mp3" type="audio/mpeg">
     </audio>
-    <audio id="no-sound">
+    <audio id="no-sound" preload="auto">
         <source src="sonido-no.mp3" type="audio/mpeg">
     </audio>
 
@@ -207,32 +233,48 @@
 
     <div id="no-popup">
         <img src="gatitos.gif" alt="Gatitos tristes">
-        <p>Esta opción fue deshabilitada por el noni</p>
+        <p>Esta opción fue deshabilitada por el noni hater</p>
     </div>
 
     <canvas id="fireworks-canvas"></canvas>
     <div id="success-overlay">
         <h1>¡SÍÍÍÍÍ! ❤️</h1>
-        <p>Te amo</p>
+        <p>Le amo puuuu, la espero en nuestro refugio..mmmmmmmmmm.</p>
     </div>
 
     <script>
         /* --- CONFIGURACIÓN --- */
-        // IMPORTANTE: Asegúrate de que los nombres coincidan exactamente con lo que subas a GitHub
-        const imageSrc = 'misalsa.jpg'; // Tu foto del puzzle
+        const imageSrc = 'misalsa.jpg'; // ASEGÚRATE DE QUE EL NOMBRE SEA CORRECTO
         
         const rows = 3;
         const cols = 3;
         let pieces = [];
         let selectedPiece = null;
 
-        /* --- INICIO Y MÚSICA --- */
+        /* --- LÓGICA DE AUDIO IPHONE Y APERTURA --- */
         function openEnvelope() {
-            // Reproducir música al primer clic (los navegadores bloquean el autoplay si no hay clic)
+            // TRUCO IPHONE: Intentar reproducir AMBOS audios en el evento de clic inicial
             const bgMusic = document.getElementById('bg-music');
-            bgMusic.volume = 0.5; // Volumen al 50%
-            bgMusic.play().catch(error => console.log("Error al reproducir audio:", error));
+            const noSound = document.getElementById('no-sound');
+            
+            // 1. Reproducir música
+            bgMusic.volume = 0.5;
+            bgMusic.play().then(() => {
+                console.log("Música iniciada");
+            }).catch(error => {
+                console.log("Error autoplay música:", error);
+            });
 
+            // 2. "Calentar" el efecto de sonido (reproducir silencio y pausar)
+            // Esto le dice al iPhone "oye, voy a usar este audio luego, cárgalo ya"
+            noSound.volume = 0; 
+            noSound.play().then(() => {
+                noSound.pause();
+                noSound.currentTime = 0;
+                noSound.volume = 1; // Restaurar volumen para cuando se use de verdad
+            }).catch(e => console.log("Error preload fx:", e));
+
+            // Animación
             const envelope = document.getElementById('envelope');
             const container = document.getElementById('envelope-container');
             container.classList.add('opening-active');
@@ -245,7 +287,7 @@
             }, 1400);
         }
 
-        /* --- LÓGICA DEL PUZZLE (Sin cambios) --- */
+        /* --- LÓGICA PUZZLE (Igual) --- */
         function initGame() {
             const board = document.getElementById('board');
             board.innerHTML = '';
@@ -265,14 +307,12 @@
             shufflePieces(pieces);
             pieces.forEach(piece => board.appendChild(piece));
         }
-
         function shufflePieces(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [array[i], array[j]] = [array[j], array[i]];
             }
         }
-
         function handlePieceClick(piece) {
             if (!selectedPiece) {
                 selectedPiece = piece;
@@ -284,7 +324,6 @@
                 checkWin();
             }
         }
-
         function swapPieces(piece1, piece2) {
             const parent = piece1.parentNode;
             const next1 = piece1.nextSibling;
@@ -292,7 +331,6 @@
             if (next1 === piece2) parent.insertBefore(piece2, piece1);
             else { parent.insertBefore(piece2, piece1); parent.insertBefore(piece1, next2); }
         }
-
         function checkWin() {
             const currentPieces = document.querySelectorAll('.puzzle-piece');
             let isWin = true;
@@ -307,7 +345,12 @@
             }
         }
 
-        /* --- LÓGICA DE LOS BOTONES Y POPUP --- */
+        /* --- BOTONES, TAUNTS Y LOGICA ESCURRIDIZA --- */
+        let escapeCount = 0;
+        const maxEscapes = 6; // Se escapa 6 veces, a la 7ma se deja
+        const taunts = ["¡Muy lenta!", "¡Casi!", "¡Ups!", "Noni gana", "¡Soy rápido!", "Si fallas otra vez su nuesni es mio"];
+        let noButtonClicked = false;
+
         function initButtons() {
             const btnYes = document.getElementById('btn-yes');
             const btnNo = document.getElementById('btn-no');
@@ -317,41 +360,95 @@
 
             // --- CLICK EN NO ---
             btnNo.addEventListener('click', () => {
-                // 1. Reproducir sonido
-                noSound.currentTime = 0; // Reiniciar por si le da muchas veces
-                noSound.play().catch(e => console.log(e));
-                
-                // 2. Mostrar Popup con GIF
-                noPopup.style.display = 'block';
+                if (noButtonClicked) return; // Si ya se pulsó, no hacer nada
 
-                // 3. Ocultar Popup después de 3 segundos
+                noButtonClicked = true; // Marcar como pulsado
+                btnNo.classList.add('disabled'); // Cambiar estilo visual
+                
+                // Reproducir sonido
+                noSound.currentTime = 0;
+                noSound.play();
+                
+                // Mostrar Popup
+                noPopup.style.display = 'block';
                 setTimeout(() => {
                     noPopup.style.display = 'none';
-                }, 3000);
+                }, 3500);
             });
 
-            // --- CLICK EN SÍ (Escapista) ---
-            ['mouseover', 'touchstart'].forEach(evt => {
-                 btnYes.addEventListener(evt, (e) => {
-                    const containerRect = container.getBoundingClientRect();
-                    const btnRect = btnYes.getBoundingClientRect();
-                    const maxX = containerRect.width - btnRect.width;
-                    const maxY = containerRect.height - btnRect.height;
-                    const newX = Math.random() * maxX;
-                    const newY = Math.random() * maxY;
-                    btnYes.style.position = 'absolute';
-                    btnYes.style.left = newX + 'px';
-                    btnYes.style.top = newY + 'px';
-                }, { passive: true });
-            });
+            // --- LÓGICA DE ESCAPE DEL SÍ ---
+            // Usamos 'touchstart' para móviles (reacción rápida) y 'mouseover' para PC
+            const moveButton = (e) => {
+                // Si ya se escapó muchas veces, dejar que la atrape
+                if (escapeCount >= maxEscapes) {
+                    return; 
+                }
 
-            btnYes.addEventListener('click', () => {
+                // Incrementar contador
+                escapeCount++;
+
+                // Mostrar mensaje burlesco
+                showTaunt(e.clientX || e.touches[0].clientX, e.clientY || e.touches[0].clientY);
+
+                // Calcular nueva posición
+                const containerRect = container.getBoundingClientRect();
+                const btnRect = btnYes.getBoundingClientRect();
+                
+                const maxX = containerRect.width - btnRect.width;
+                const maxY = containerRect.height - btnRect.height;
+                
+                const newX = Math.random() * maxX;
+                const newY = Math.random() * maxY;
+
+                btnYes.style.position = 'absolute';
+                btnYes.style.left = Math.max(0, newX) + 'px';
+                btnYes.style.top = Math.max(0, newY) + 'px';
+            };
+
+            // Eventos para el escape
+            btnYes.addEventListener('mouseover', moveButton);
+            btnYes.addEventListener('touchstart', moveButton, { passive: true });
+
+            // Evento para CLICK FINAL (Victoria)
+            btnYes.addEventListener('click', (e) => {
+                // Doble chequeo: si aún debe escapar y el usuario fue muy rápido (click gana a touchstart), forzar escape
+                if (escapeCount < maxEscapes) {
+                    e.preventDefault(); // Evitar click
+                    moveButton(e); // Mover
+                    return;
+                }
+
+                // Victoria
                 document.getElementById('final-message').style.display = 'none';
-                document.getElementById('no-popup').style.display = 'none'; // Por si acaso estaba abierto
+                document.getElementById('no-popup').style.display = 'none';
                 document.getElementById('success-overlay').style.display = 'flex';
                 startFireworks();
             });
         }
+
+        // Función para mostrar mensajes flotantes
+        function showTaunt(x, y) {
+            const msg = document.createElement('div');
+            msg.classList.add('taunt-msg');
+            msg.innerText = taunts[Math.floor(Math.random() * taunts.length)];
+            
+            // Si no hay coordenadas (ej. mouseover a veces), usar centro
+            if (!x || !y) {
+                x = window.innerWidth / 2;
+                y = window.innerHeight / 2;
+            }
+
+            msg.style.left = (x - 20) + 'px'; // Un poco desplazado
+            msg.style.top = (y - 40) + 'px';
+            
+            document.body.appendChild(msg);
+
+            // Eliminar del DOM después de la animación
+            setTimeout(() => {
+                msg.remove();
+            }, 1500);
+        }
+
 
         /* --- FUEGOS ARTIFICIALES --- */
         function startFireworks() {
