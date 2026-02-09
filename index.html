@@ -24,10 +24,10 @@
             background-color: var(--bg-color);
             background-image: radial-gradient(#f8bbd0 1px, transparent 1px);
             background-size: 20px 20px;
-            overflow: hidden; /* Importante para que no haya scroll con los fuegos artificiales */
+            overflow: hidden;
         }
 
-        /* --- ESTILOS DEL SOBRE (Versión Bonita) --- */
+        /* --- ESTILOS DEL SOBRE --- */
         #envelope-container {
             position: relative;
             cursor: pointer;
@@ -111,9 +111,8 @@
 
         /* --- MENSAJE FINAL Y BOTONES --- */
         #final-message {
-            display: none; /* Se activa con Flex */
-            position: fixed; /* Fixed para que ocupe toda la pantalla sin scroll */
-            top: 0; left: 0; width: 100%; height: 100%;
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(252, 228, 236, 0.98);
             flex-direction: column; justify-content: center; align-items: center;
             text-align: center; z-index: 100;
@@ -128,46 +127,48 @@
 
         .buttons-container {
             position: relative;
-            width: 100%;
-            height: 200px; /* Espacio para que el botón se mueva */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-            z-index: 102;
+            width: 100%; height: 200px;
+            display: flex; justify-content: center; align-items: center;
+            gap: 20px; z-index: 102;
         }
 
         .btn {
-            padding: 15px 40px;
-            font-size: 1.2rem;
+            padding: 15px 40px; font-size: 1.2rem;
             border: none; border-radius: 50px;
             cursor: pointer; font-weight: bold;
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            transition: transform 0.1s; /* Transición muy rápida para el escape */
+            transition: transform 0.1s;
         }
 
-        #btn-yes {
-            background-color: #e91e63; color: white;
-            position: relative; /* Necesario para poder moverlo con top/left luego */
-        }
-
+        #btn-yes { background-color: #e91e63; color: white; position: relative; }
         #btn-no { background-color: #bdbdbd; color: #424242; }
+
+        /* --- POPUP DEL "NO" (GATITOS) --- */
+        #no-popup {
+            display: none;
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: white; padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            z-index: 200; text-align: center;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: 80%; max-width: 300px;
+        }
+        #no-popup img { width: 100%; border-radius: 10px; margin-bottom: 10px; }
+        #no-popup p { color: #d81b60; font-weight: bold; font-size: 1.1em; }
+
+        @keyframes popIn { from { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
 
         /* --- FUEGOS ARTIFICIALES --- */
         #fireworks-canvas {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 101; /* Entre el fondo y el texto */
-            pointer-events: none; /* Para que no bloquee clicks si algo queda abajo */
-            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 101; pointer-events: none; display: none;
         }
         
-        /* Mensaje de éxito final */
         #success-overlay {
-            display: none;
-            position: fixed; top:0; left:0; width:100%; height:100%;
-            z-index: 103;
-            flex-direction: column; justify-content: center; align-items: center;
+            display: none; position: fixed; top:0; left:0; width:100%; height:100%;
+            z-index: 103; flex-direction: column; justify-content: center; align-items: center;
             color: #c2185b;
         }
         #success-overlay h1 { font-size: 3em; text-shadow: 0 0 10px white; }
@@ -175,6 +176,13 @@
     </style>
 </head>
 <body>
+
+    <audio id="bg-music" loop>
+        <source src="musica.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="no-sound">
+        <source src="sonido-no.mp3" type="audio/mpeg">
+    </audio>
 
     <div id="envelope-container" onclick="openEnvelope()">
         <div class="envelope" id="envelope">
@@ -184,7 +192,7 @@
     </div>
 
     <div id="game-container">
-        <h2>Arme el puzzle, a ver si con la práctica que tiene puede :P...</h2>
+        <h2>Junta las piezas...</h2>
         <div class="puzzle-board" id="board"></div>
         <p style="color: var(--text-color); margin-top: 15px;">Toca dos piezas para intercambiarlas</p>
     </div>
@@ -197,25 +205,34 @@
         </div>
     </div>
 
+    <div id="no-popup">
+        <img src="gatitos.gif" alt="Gatitos tristes">
+        <p>Esta opción fue deshabilitada por el noni</p>
+    </div>
+
     <canvas id="fireworks-canvas"></canvas>
     <div id="success-overlay">
         <h1>¡SÍÍÍÍÍ! ❤️</h1>
-        <p>Le amo, pu.. La espero en nuestro refugio :)</p>
+        <p>Te amo</p>
     </div>
-
 
     <script>
         /* --- CONFIGURACIÓN --- */
-        // ¡PON TU FOTO AQUÍ!
-        const imageSrc = 'misalsa.jpg'; 
+        // IMPORTANTE: Asegúrate de que los nombres coincidan exactamente con lo que subas a GitHub
+        const imageSrc = 'foto.jpg'; // Tu foto del puzzle
         
         const rows = 3;
         const cols = 3;
         let pieces = [];
         let selectedPiece = null;
 
-        // --- FUNCIONES DEL SOBRE Y PUZZLE (Igual que la versión anterior) ---
+        /* --- INICIO Y MÚSICA --- */
         function openEnvelope() {
+            // Reproducir música al primer clic (los navegadores bloquean el autoplay si no hay clic)
+            const bgMusic = document.getElementById('bg-music');
+            bgMusic.volume = 0.5; // Volumen al 50%
+            bgMusic.play().catch(error => console.log("Error al reproducir audio:", error));
+
             const envelope = document.getElementById('envelope');
             const container = document.getElementById('envelope-container');
             container.classList.add('opening-active');
@@ -228,6 +245,7 @@
             }, 1400);
         }
 
+        /* --- LÓGICA DEL PUZZLE (Sin cambios) --- */
         function initGame() {
             const board = document.getElementById('board');
             board.innerHTML = '';
@@ -284,139 +302,98 @@
             if (isWin) {
                 setTimeout(() => {
                     document.getElementById('final-message').style.display = 'flex';
-                    // Iniciar comportamiento de botones
                     initButtons();
                 }, 500);
             }
         }
 
-        /* --- LÓGICA DE LOS BOTONES SÍ/NO --- */
+        /* --- LÓGICA DE LOS BOTONES Y POPUP --- */
         function initButtons() {
             const btnYes = document.getElementById('btn-yes');
             const btnNo = document.getElementById('btn-no');
+            const noPopup = document.getElementById('no-popup');
+            const noSound = document.getElementById('no-sound');
             const container = document.getElementById('btns-container');
 
-            // Comportamiento del NO
+            // --- CLICK EN NO ---
             btnNo.addEventListener('click', () => {
-                alert("Esta opción fue deshabilitada por el noni hater");
+                // 1. Reproducir sonido
+                noSound.currentTime = 0; // Reiniciar por si le da muchas veces
+                noSound.play().catch(e => console.log(e));
+                
+                // 2. Mostrar Popup con GIF
+                noPopup.style.display = 'block';
+
+                // 3. Ocultar Popup después de 3 segundos
+                setTimeout(() => {
+                    noPopup.style.display = 'none';
+                }, 3000);
             });
 
-            // Comportamiento del SÍ (Escapista)
-            // Usamos mouseover para PC y touchstart para móvil para que intente escapar antes del click
+            // --- CLICK EN SÍ (Escapista) ---
             ['mouseover', 'touchstart'].forEach(evt => {
                  btnYes.addEventListener(evt, (e) => {
-                    // Un pequeño truco: si se mueve muy rápido, el evento de click a veces gana al de movimiento.
-                    // Pero la mayoría de las veces se escapará.
-                    
                     const containerRect = container.getBoundingClientRect();
                     const btnRect = btnYes.getBoundingClientRect();
-
-                    // Calcular límites dentro del contenedor
                     const maxX = containerRect.width - btnRect.width;
                     const maxY = containerRect.height - btnRect.height;
-                    
-                    // Generar nueva posición aleatoria
                     const newX = Math.random() * maxX;
                     const newY = Math.random() * maxY;
-
-                    // Aplicar movimiento. Cambiamos a absolute para moverlo libremente dentro del contenedor relativo.
                     btnYes.style.position = 'absolute';
-                    // Restamos la posición inicial del contenedor para que las coordenadas sean relativas a él
                     btnYes.style.left = newX + 'px';
                     btnYes.style.top = newY + 'px';
-                }, { passive: true }); // passive true ayuda al rendimiento en scroll movil
+                }, { passive: true });
             });
 
-            // Comportamiento si LOGRA atrapar el SÍ
             btnYes.addEventListener('click', () => {
-                // Ocultar la pregunta y botones
                 document.getElementById('final-message').style.display = 'none';
-                // Mostrar mensaje final y fuegos artificiales
+                document.getElementById('no-popup').style.display = 'none'; // Por si acaso estaba abierto
                 document.getElementById('success-overlay').style.display = 'flex';
                 startFireworks();
             });
         }
 
-
-        /* --- LÓGICA DE FUEGOS ARTIFICIALES (Canvas puro) --- */
+        /* --- FUEGOS ARTIFICIALES --- */
         function startFireworks() {
             const canvas = document.getElementById('fireworks-canvas');
             canvas.style.display = 'block';
             const ctx = canvas.getContext('2d');
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-
             let particles = [];
-
             function Particle(x, y, color) {
-                this.x = x; this.y = y;
-                this.color = color;
+                this.x = x; this.y = y; this.color = color;
                 this.radius = Math.random() * 3 + 1;
-                this.velocity = {
-                    x: (Math.random() - 0.5) * 8,
-                    y: (Math.random() - 0.5) * 8
-                };
-                this.alpha = 1;
-                this.friction = 0.95;
-                this.gravity = 0.05;
+                this.velocity = { x: (Math.random() - 0.5) * 8, y: (Math.random() - 0.5) * 8 };
+                this.alpha = 1; this.friction = 0.95; this.gravity = 0.05;
             }
             Particle.prototype.draw = function() {
-                ctx.save();
-                ctx.globalAlpha = this.alpha;
-                ctx.beginPath();
+                ctx.save(); ctx.globalAlpha = this.alpha; ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
-                ctx.fillStyle = this.color;
-                ctx.fill();
-                ctx.restore();
+                ctx.fillStyle = this.color; ctx.fill(); ctx.restore();
             }
             Particle.prototype.update = function() {
-                this.velocity.x *= this.friction;
-                this.velocity.y *= this.friction;
-                this.velocity.y += this.gravity;
-                this.x += this.velocity.x;
-                this.y += this.velocity.y;
-                this.alpha -= 0.01;
+                this.velocity.x *= this.friction; this.velocity.y *= this.friction;
+                this.velocity.y += this.gravity; this.x += this.velocity.x; this.y += this.velocity.y; this.alpha -= 0.01;
             }
-
             function createFirework(x, y) {
                 const colors = ['#ff4081', '#e91e63', '#ffeb3b', '#00e676', '#2979ff'];
                 const color = colors[Math.floor(Math.random() * colors.length)];
-                for (let i = 0; i < 50; i++) {
-                    particles.push(new Particle(x, y, color));
-                }
+                for (let i = 0; i < 50; i++) { particles.push(new Particle(x, y, color)); }
             }
-
             function animate() {
                 requestAnimationFrame(animate);
-                ctx.fillStyle = 'rgba(252, 228, 236, 0.1)'; // Rastro suave
+                ctx.fillStyle = 'rgba(252, 228, 236, 0.1)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-
                 particles.forEach((particle, i) => {
-                    if (particle.alpha > 0) {
-                        particle.update();
-                        particle.draw();
-                    } else {
-                        particles.splice(i, 1);
-                    }
+                    if (particle.alpha > 0) { particle.update(); particle.draw(); } else { particles.splice(i, 1); }
                 });
-
-                // Lanzar fuegos artificiales aleatoriamente
-                if (Math.random() < 0.05) {
-                    createFirework(Math.random() * canvas.width, Math.random() * canvas.height / 2);
-                }
+                if (Math.random() < 0.05) createFirework(Math.random() * canvas.width, Math.random() * canvas.height / 2);
             }
-            
-            // Lanzar un par al inicio al centro
             createFirework(canvas.width / 2, canvas.height / 3);
             setTimeout(() => createFirework(canvas.width / 2, canvas.height / 4), 500);
-            
             animate();
-
-            // Redimensionar si gira la pantalla
-            window.addEventListener('resize', () => {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-            });
+            window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
         }
     </script>
 </body>
